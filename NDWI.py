@@ -40,6 +40,11 @@ ndwi_thresh = 0.30
 use_rf = True
 n_trees = 100
 
+# Time laps parameter
+start = datetime.date(2023, 7, 1)
+end   = datetime.date(2023, 7, 25)
+step  = datetime.timedelta(days=8)
+
 # ---------------- AOI ----------------
 aoi = ee.Geometry.Rectangle([32.04903889, -24.05135556, 32.26139722, -24.33536667])
 
@@ -374,9 +379,6 @@ def per_polygon_stats(f):
     })
 
 # ---------------- TIME-SERIES LOOP ----------------
-start = datetime.date(2023, 7, 1)
-end   = datetime.date(2023, 7, 25)
-step  = datetime.timedelta(days=8)
 
 intervals = []
 while start < end:
@@ -390,7 +392,8 @@ for (d1, d2) in intervals:
                    .filterBounds(aoi)
                    .filterDate(d1, d2)
                    .filter(ee.Filter.lt('CLOUDY_PIXEL_PERCENTAGE', 40))
-                   .select(['B3','B8']))
+                   .select(['B3','B8'])
+                   .map(lambda img: img.divide(10000).copyProperties(img, ['system:time_start'])))
     
     ndwi = s2_interval.median().normalizedDifference(['B3','B8']).rename('NDWI')
     ndwi_mask = ndwi.gt(ndwi_thresh).selfMask()
