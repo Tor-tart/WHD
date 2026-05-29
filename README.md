@@ -28,6 +28,8 @@ python3 NDWI.py -p {Project ID}
 
 NOTE: Stuff gets saved into your Google drive
 
+---
+
 #### TODO
 - Create overlay
 - extract specific dates (August-April/ year) images with overlay
