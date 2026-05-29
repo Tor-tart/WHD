@@ -1,6 +1,37 @@
+import os
 import ee
 import datetime
-ee.Initialize()
+import argparse
+import subprocess
+import sys
+
+
+def parse_args():
+    parser = argparse.ArgumentParser(description='NDWI water presence analysis')
+    parser.add_argument('--setup', action='store_true', help='Start Earth Engine authentication process')
+    parser.add_argument('-p', '--project', dest='project_id', help='Google Cloud project ID for Earth Engine')
+    return parser.parse_args()
+
+
+def initialize_ee(args):
+    if args.setup:
+        subprocess.run(['earthengine', 'authenticate'], check=True)
+        if not args.project_id:
+            print('Authentication complete. Exiting because no -p/--project was provided.')
+            raise SystemExit(0)
+
+    project_id = args.project_id or os.getenv('EE_PROJECT') or os.getenv('GOOGLE_CLOUD_PROJECT') or os.getenv('GCLOUD_PROJECT')
+    if not project_id:
+        if args.setup:
+            print('Authentication complete. Re-run with -p/--project or set EE_PROJECT.', file=sys.stderr)
+            return
+        raise RuntimeError("Provide project ID with -p/--project or set EE_PROJECT (or GOOGLE_CLOUD_PROJECT/GCLOUD_PROJECT).")
+
+    ee.Initialize(project=project_id)
+
+
+args = parse_args()
+initialize_ee(args)
 
 # ---------------- PARAMETERS ----------------
 ndwi_start = '2023-07-01'
@@ -8,6 +39,11 @@ ndwi_end   = '2023-07-25'
 ndwi_thresh = 0.30
 use_rf = True
 n_trees = 100
+
+# Time laps parameter
+start = datetime.date(2023, 7, 1)
+end   = datetime.date(2023, 7, 25)
+step  = datetime.timedelta(days=8)
 
 # ---------------- AOI ----------------
 aoi = ee.Geometry.Rectangle([32.04903889, -24.05135556, 32.26139722, -24.33536667])
@@ -64,7 +100,7 @@ P4 = ee.Feature(ee.Geometry.Polygon(
           [32.275822000827816, -24.284359065723695],
           [32.27584077629092, -24.284277162374522],
           [32.27583138855937, -24.28424048921596],
-          [32.27576299222949, -24.284161030669463]]]), {'id': 'P4'}
+          [32.27576299222949, -24.284161030669463]]]), {'id': 'P4'})
 
 P5 = ee.Feature(ee.Geometry.Polygon(
 	 [[[32.27727003508104, -24.282595402826203],
@@ -73,7 +109,7 @@ P5 = ee.Feature(ee.Geometry.Polygon(
           [32.27727539949907, -24.282849673134763],
           [32.27739878111375, -24.282859452751858],
           [32.27742023878587, -24.28275676673489],
-          [32.277377323441634, -24.282649190818542]]]), {'id': 'P5'}
+          [32.277377323441634, -24.282649190818542]]]), {'id': 'P5'})
 
 P6 = ee.Feature(ee.Geometry.Polygon(
 	 [[[32.13507803995079, -24.154609983958306],
@@ -84,7 +120,7 @@ P6 = ee.Feature(ee.Geometry.Polygon(
           [32.13509949762291, -24.154849825705025],
           [32.13528725225395, -24.154795983719435],
           [32.13535162527031, -24.154717668063554],
-          [32.13533016759819, -24.154619773426177]]]), {'id': 'P6'}
+          [32.13533016759819, -24.154619773426177]]]), {'id': 'P6'})
 
 P7 = ee.Feature(ee.Geometry.Polygon(
 	 [[[32.126411243532615, -24.155631118788158],
@@ -93,7 +129,7 @@ P7 = ee.Feature(ee.Geometry.Polygon(
           [32.126358940456825, -24.155692302460952],
           [32.12640453801008, -24.155691078787797],
           [32.1264259956822, -24.15567884205546],
-          [32.12643001899572, -24.155649473893074]]]), {'id': 'P7'}
+          [32.12643001899572, -24.155649473893074]]]), {'id': 'P7'})
 
 P8 = ee.Feature(ee.Geometry.Polygon(
 	 [[[32.22432410886302, -24.241669051210394],
@@ -103,7 +139,7 @@ P8 = ee.Feature(ee.Geometry.Polygon(
           [32.22432410886302, -24.24196742583687],
           [32.22443676164165, -24.241913620628072],
           [32.224495770239976, -24.24180111875432],
-          [32.22438311746135, -24.241703290957165]]]), {'id':'P8'}
+          [32.22438311746135, -24.241703290957165]]]), {'id':'P8'})
 
 P9 = ee.Feature(ee.Geometry.Polygon(
 	[[[32.02928470831376, -24.090248530987502],
@@ -119,7 +155,7 @@ P9 = ee.Feature(ee.Geometry.Polygon(
           [32.02940540771943, -24.09057909134871],
           [32.0294000433014, -24.090422381357836],
           [32.029386632256326, -24.09035626927297],
-          [32.02935176353913, -24.090290157153984]]]), {'id': 'P9'}
+          [32.02935176353913, -24.090290157153984]]]), {'id': 'P9'})
 
 P10 = ee.Feature(ee.Geometry.Polygon(
 	[[[32.02849077444535, -24.089540884088418],
@@ -131,7 +167,7 @@ P10 = ee.Feature(ee.Geometry.Polygon(
           [32.02834325294953, -24.089913072564013],
           [32.02849613886338, -24.089883689302606],
           [32.02853368978959, -24.089795539477983],
-          [32.028547100834665, -24.08964862296883]]]), {'id': 'P10'}
+          [32.028547100834665, -24.08964862296883]]]), {'id': 'P10'})
 
 P11 = ee.Feature(ee.Geometry.Polygon(
 	[[[32.049175856751404, -24.0511964293553],
@@ -144,7 +180,7 @@ P11 = ee.Feature(ee.Geometry.Polygon(
           [32.049395797890625, -24.051338491232602],
           [32.04938775126358, -24.051289504396117],
           [32.04933410708328, -24.051235618854392],
-          [32.0492295009317, -24.051189081322892]]]), {'id': 'P11'}
+          [32.0492295009317, -24.051189081322892]]]), {'id': 'P11'})
 
 P12 = ee.Feature(ee.Geometry.Polygon(
         [[[31.977189942007378, -24.134656259794045],
@@ -169,7 +205,7 @@ P12 = ee.Feature(ee.Geometry.Polygon(
           [31.977434023027733, -24.134976914530096],
           [31.977450116281823, -24.134852079575776],
           [31.977353556757286, -24.134785990432963],
-          [31.977297230367974, -24.134692976025963]]]), {'id': 'P12'}
+          [31.977297230367974, -24.134692976025963]]]), {'id': 'P12'})
 
 P13 = ee.Feature(ee.Geometry.Polygon(
 	 [[[32.08089324686684, -24.064157994811048],
@@ -192,7 +228,7 @@ P13 = ee.Feature(ee.Geometry.Polygon(
           [32.08107369583489, -24.064524983826814],
           [32.0810576025808, -24.06431436193917],
           [32.08100932281853, -24.064235990915964],
-          [32.08094494980217, -24.064201703578263]]]), {'id': 'P13'}
+          [32.08094494980217, -24.064201703578263]]]), {'id': 'P13'})
 
 P14 = ee.Feature(ee.Geometry.Polygon(
  	[[[32.038918771774355, -24.03715329881368],
@@ -205,7 +241,7 @@ P14 = ee.Feature(ee.Geometry.Polygon(
           [32.03931573870856, -24.03794697062449],
           [32.03931037429053, -24.037706909915034],
           [32.03928355220038, -24.03739825977228],
-          [32.03899387362677, -24.03715329881368]]]), {'id': 'P14'}
+          [32.03899387362677, -24.03715329881368]]]), {'id': 'P14'})
 
 P15 = ee.Feature(ee.Geometry.Polygon(
 	 [[[32.05571760501406, -24.05091950931077],
@@ -218,7 +254,7 @@ P15 = ee.Feature(ee.Geometry.Polygon(
           [32.055610316653464, -24.051546541213234],
           [32.05570151175997, -24.051360391436834],
           [32.05569078292391, -24.0510762675735],
-          [32.05570151175997, -24.050978293681723]]]), {'id': 'P15'}
+          [32.05570151175997, -24.050978293681723]]]), {'id': 'P15'})
 
 P16 = ee.Feature(ee.Geometry.Polygon(
         [[[32.033122922281734, -24.318786883231304],
@@ -251,10 +287,11 @@ P16 = ee.Feature(ee.Geometry.Polygon(
           [32.03070757372717, -24.320919068685807],
           [32.03143713457922, -24.321153708877848]]]), {'id':'P16'})
 
-# … continue defining P3, P4, … P16, P46 using your uploaded polygon coordinates …
-
 # Collect them into one FeatureCollection
-drawn_features = ee.FeatureCollection([P1, P2])  # add all P3–P16, P46 here
+drawn_features = ee.FeatureCollection([
+    P1, P2, P3, P4, P5, P6, P7, P8,
+    P9, P10, P11, P12, P13, P14, P15, P16
+])
 
 # ---------------- LOAD SENTINEL-2 ----------------
 s2 = (ee.ImageCollection('COPERNICUS/S2_SR_HARMONIZED')
@@ -276,17 +313,38 @@ ndwi_mask_simple = ndwi_composite.gt(ndwi_thresh).selfMask()
 # ---------------- RANDOM FOREST ----------------
 water_rf_mask = ndwi_mask_simple
 if use_rf:
+    # Use explicit labeled polygons so both classes are guaranteed.
     labeled_polys = ee.FeatureCollection([
-        ee.Feature(P1.geometry(), {"class": 0}),
-        ee.Feature(P2.geometry(), {"class": 0}),
-        # mark some polygons as water (class=1) based on your knowledge
+        ee.Feature(P1.geometry(), {'class': 0}),
+        ee.Feature(P2.geometry(), {'class': 0}),
+        ee.Feature(P3.geometry(), {'class': 0}),
+        ee.Feature(P4.geometry(), {'class': 0}),
+        ee.Feature(P5.geometry(), {'class': 0}),
+        ee.Feature(P6.geometry(), {'class': 0}),
+        ee.Feature(P7.geometry(), {'class': 1}),
+        ee.Feature(P8.geometry(), {'class': 1}),
+        ee.Feature(P9.geometry(), {'class': 1}),
+        ee.Feature(P10.geometry(), {'class': 1}),
+        ee.Feature(P11.geometry(), {'class': 1}),
+        ee.Feature(P12.geometry(), {'class': 1}),
+        ee.Feature(P13.geometry(), {'class': 1}),
+        ee.Feature(P14.geometry(), {'class': 0}),
+        ee.Feature(P15.geometry(), {'class': 0}),
+        ee.Feature(P16.geometry(), {'class': 0}),
     ])
 
     stack = ndwi_composite.addBands(s2.median())
-    train = stack.sampleRegions(collection=labeled_polys,
-                                properties=['class'],
-                                scale=10,
-                                tileScale=4)
+    train = stack.sampleRegions(
+        collection=labeled_polys,
+        properties=['class'],
+        scale=10,
+        tileScale=4
+    )
+
+    class_hist = ee.Dictionary(train.aggregate_histogram('class'))
+    class0_count = ee.Number(class_hist.get('0', 0))
+    class1_count = ee.Number(class_hist.get('1', 0))
+    has_both_classes = class0_count.gt(0).And(class1_count.gt(0))
 
     rf = ee.Classifier.smileRandomForest(
         numberOfTrees=n_trees,
@@ -295,11 +353,16 @@ if use_rf:
     ).train(train, 'class')
 
     rf_class = stack.classify(rf)
-    water_rf_mask = rf_class.eq(1).selfMask()
+    rf_water_mask = rf_class.eq(1).selfMask()
+    water_rf_mask = ee.Image(ee.Algorithms.If(has_both_classes, rf_water_mask, ndwi_mask_simple))
 
-    cm = rf.confusionMatrix()
-    print('RF confusion matrix:', cm.getInfo())
-    print('RF overall accuracy:', cm.accuracy().getInfo())
+    print('RF class counts:', class_hist.getInfo())
+    if has_both_classes.getInfo():
+        cm = rf.confusionMatrix()
+        print('RF confusion matrix:', cm.getInfo())
+        print('RF overall accuracy:', cm.accuracy().getInfo())
+    else:
+        print('RF skipped: only one class in training samples; using NDWI threshold mask.')
 
 # ---------------- WATER STATS FUNCTION ----------------
 def per_polygon_stats(f):
@@ -316,9 +379,6 @@ def per_polygon_stats(f):
     })
 
 # ---------------- TIME-SERIES LOOP ----------------
-start = datetime.date(2023, 7, 1)
-end   = datetime.date(2023, 7, 25)
-step  = datetime.timedelta(days=8)
 
 intervals = []
 while start < end:
@@ -332,7 +392,8 @@ for (d1, d2) in intervals:
                    .filterBounds(aoi)
                    .filterDate(d1, d2)
                    .filter(ee.Filter.lt('CLOUDY_PIXEL_PERCENTAGE', 40))
-                   .select(['B3','B8']))
+                   .select(['B3','B8'])
+                   .map(lambda img: img.divide(10000).copyProperties(img, ['system:time_start'])))
     
     ndwi = s2_interval.median().normalizedDifference(['B3','B8']).rename('NDWI')
     ndwi_mask = ndwi.gt(ndwi_thresh).selfMask()
